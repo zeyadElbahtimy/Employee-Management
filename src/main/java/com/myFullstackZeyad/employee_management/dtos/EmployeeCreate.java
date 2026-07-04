@@ -3,6 +3,7 @@ package com.myFullstackZeyad.employee_management.dtos;
 import jakarta.validation.constraints.*;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 public record EmployeeCreate(
 
@@ -25,5 +26,10 @@ public record EmployeeCreate(
 
         @NotBlank(message = "Position is required")
         String position
+        ,
+        @NotNull(message = "department is required")
+        UUID departmentId
+
+
 ) {
 }

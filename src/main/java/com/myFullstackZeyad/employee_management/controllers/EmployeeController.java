@@ -1,8 +1,12 @@
 package com.myFullstackZeyad.employee_management.controllers;
 
 import com.myFullstackZeyad.employee_management.abstracts.EmployeeService;
+import com.myFullstackZeyad.employee_management.abstracts.LeaveRequestService;
 import com.myFullstackZeyad.employee_management.dtos.EmployeeCreate;
+import com.myFullstackZeyad.employee_management.dtos.EmployeeUpdate;
+import com.myFullstackZeyad.employee_management.dtos.LeaveRequestCreate;
 import com.myFullstackZeyad.employee_management.entities.Employee;
+import com.myFullstackZeyad.employee_management.entities.LeaveRequest;
 import com.myFullstackZeyad.employee_management.shared.GlobalResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -42,6 +47,8 @@ public class EmployeeController {
     );
     @Autowired
     private EmployeeService employeeService;
+    @Autowired
+    private LeaveRequestService leaveRequestService;
 
 //    public EmployeeController(EmployeeService employeeService) {
 //        this.employeeService = employeeService;
@@ -52,8 +59,8 @@ public class EmployeeController {
     @GetMapping
 
 
-    public ResponseEntity<GlobalResponse<ArrayList<Employee>>> findAll() {
-        ArrayList<Employee> employees = employeeService.findAll();
+    public ResponseEntity<GlobalResponse<List<Employee>>> findAll() {
+        List<Employee> employees = employeeService.findAll();
         return new ResponseEntity<>(new GlobalResponse<>(employees), HttpStatus.OK);
     }
 
@@ -120,6 +127,15 @@ public class EmployeeController {
         return new ResponseEntity<>(new GlobalResponse<>(newEmployee), HttpStatus.OK);
     }
 
+    @PostMapping("/{employeeId}/leave-request")
+    public ResponseEntity<GlobalResponse<LeaveRequest>> leaveRequest(
+            @RequestBody @Valid LeaveRequestCreate leaveRequestCreate,
+            @PathVariable UUID employeeId) {
+
+        LeaveRequest newLeaveRequest = leaveRequestService.createOne(leaveRequestCreate, employeeId);
+        return new ResponseEntity<>(new GlobalResponse<>(newLeaveRequest), HttpStatus.OK);
+    }
+
 
 //    public Employee updateOne(
 //            @PathVariable UUID employeeId,
@@ -145,20 +161,20 @@ public class EmployeeController {
         return new ResponseEntity<>(new GlobalResponse<>(updatedEmployee), HttpStatus.OK);
     }
 
-//    @DeleteMapping("{employeeId}")
-//    public void deleteOne(@PathVariable UUID employeeId) {
-//        Optional<Employee> employee = employees.stream().filter(emp -> emp.getId().equals(employeeId)).findFirst();
-//        if (employee.isPresent()) {
-//            employees.remove(employee.get());
-//
-//        }
-
-//    }
 
     @DeleteMapping("{employeeId}")
     public ResponseEntity<Void> deleteOne(@PathVariable UUID employeeId) {
         employeeService.deleteOne(employeeId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @GetMapping("/{employeeId}/leave-request")
+    public ResponseEntity<GlobalResponse<List<LeaveRequest>>> leaveRequestsByEmployeeId(
+            @PathVariable UUID employeeId
+    ) {
+        List<LeaveRequest> leaveRequests = leaveRequestService.findAllByEmployeeId(employeeId);
+        return new ResponseEntity<>(new GlobalResponse<>(leaveRequests), HttpStatus.OK);
+
     }
 }
 

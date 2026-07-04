@@ -3,24 +3,31 @@ package com.myFullstackZeyad.employee_management.services;
 import com.myFullstackZeyad.employee_management.abstracts.EmployeeService;
 import com.myFullstackZeyad.employee_management.dtos.EmployeeCreate;
 import com.myFullstackZeyad.employee_management.dtos.EmployeeUpdate;
+import com.myFullstackZeyad.employee_management.entities.Department;
 import com.myFullstackZeyad.employee_management.entities.Employee;
+import com.myFullstackZeyad.employee_management.reposotories.DepartmentRepo;
+import com.myFullstackZeyad.employee_management.reposotories.EmployeeRepo;
 import com.myFullstackZeyad.employee_management.shared.CustomResponceException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Service
 public class EmployeeServiceImp implements EmployeeService {
-    ArrayList<Employee> employees = new ArrayList<>();
+
+    @Autowired
+    private EmployeeRepo employeeRepo;
+
+    @Autowired
+    private DepartmentRepo departmentRepo;
 
 
     public Employee findOne(UUID employeeId) {
 
-        Employee employee = employees.stream()
-                .filter(emp -> emp.getId().equals(employeeId))
-                .findFirst()
+        Employee employee = employeeRepo.findById(employeeId)
                 .orElseThrow(() -> CustomResponceException.ResourceNotFound("Employee  with id " + employeeId + " not found"));
 
         System.out.println("find one employee service");
@@ -30,19 +37,22 @@ public class EmployeeServiceImp implements EmployeeService {
     }
 
 
-    public ArrayList<Employee> findAll() {
-        return employees;
+    public List<Employee> findAll() {
+
+        return employeeRepo.findAll();
     }
 
 
     public void deleteOne(UUID employeeId) {
-        Optional<Employee> employee = employees.stream().filter(emp -> emp.getId().equals(employeeId)).findFirst();
-        employee.ifPresent(value -> employees.remove(value));
+        Optional<Employee> employee = employeeRepo.findById(employeeId);
+
+        employee.ifPresent(value -> employeeRepo.deleteById(value.getId()));
 
     }
 
     public Employee updateOne(UUID employeeId, EmployeeUpdate employee) {
-        Employee existingEmployee = employees.stream().filter(emp -> emp.getId().equals(employeeId)).findFirst().orElseThrow(() -> CustomResponceException.ResourceNotFound("Employee  with id " + employeeId + " not found"));
+        Employee existingEmployee = employeeRepo.findById(employeeId)
+                .orElseThrow(() -> CustomResponceException.ResourceNotFound("Employee  with id " + employeeId + " not found"));
 
 
         existingEmployee.setFirstName(employee.firstName());
@@ -50,24 +60,25 @@ public class EmployeeServiceImp implements EmployeeService {
         existingEmployee.setPhoneNumber(employee.phoneNumber());
 
         existingEmployee.setPosition(employee.position());
-        existingEmployee.setDepartmentId(existingEmployee.getDepartmentId());
+        employeeRepo.save(existingEmployee);
         return existingEmployee;
     }
 
     @Override
     public Employee createOne(EmployeeCreate employeeCreate) {
         Employee employee = new Employee();
-
-        employee.setId(UUID.randomUUID());
-        employee.setDepartmentId(UUID.randomUUID());
+        Department department = departmentRepo.findById(employeeCreate.departmentId())
+                .orElseThrow(() -> CustomResponceException.ResourceNotFound(
+                        "Department With Id" + employeeCreate.departmentId() + " not found"
+                ));
         employee.setFirstName(employeeCreate.firstName());
         employee.setLastName(employeeCreate.lastName());
         employee.setPosition(employeeCreate.position());
         employee.setHireDate(employeeCreate.hireDate());
         employee.setPhoneNumber(employeeCreate.phoneNumber());
         employee.setEmail(employeeCreate.email());
-
-        employees.add(employee);
+        employee.setDepartment(department);
+        employeeRepo.save(employee);
         return employee;
     }
 
